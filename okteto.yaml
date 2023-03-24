@@ -1,0 +1,64 @@
+name: oktacoshop
+
+build:
+  menu:
+    context: menu
+
+deploy:
+  image: okteto/pipeline-runner:1.0.0-sam
+  commands:
+  - name: create an AWS SQS queue
+    command: |
+      set -e
+      output=$(aws sqs create-queue --queue-name ${OKTETO_NAMESPACE}-oktacoshop --tags owner=${OKTETO_NAME})
+      queue=$(echo $output | jq '.["QueueUrl"]')
+      echo "OKTETO_EXTERNAL_SQS_ENDPOINTS_QUEUE_URL=${queue}" >> $OKTETO_ENV
+
+  - name: create an AWS S3 bucket
+    command: |
+      set -e
+      bucket=${OKTETO_NAMESPACE}-oktacoshop
+      aws s3api create-bucket --bucket $bucket --acl private --region us-east-1
+      echo "OKTETO_EXTERNAL_S3_ENDPOINTS_BUCKET_URL=s3://${bucket}" >> $OKTETO_ENV
+
+  - name: deploy the Menu microservice
+    command: helm upgrade --install menu menu/chart --set image=${OKTETO_BUILD_MENU_IMAGE} --set queue=${OKTETO_EXTERNAL_SQS_ENDPOINTS_QUEUE_URL} --set aws.region=${AWS_REGION} --set aws.accessKey=${AWS_ACCESS_KEY_ID} --set aws.secretAccessKey=${AWS_SECRET_ACCESS_KEY} --set author=${OKTETO_NAMESPACE}-${OKTETO_NAME}
+
+destroy:
+  image: okteto/pipeline-runner:1.0.0-sam
+  commands:
+  - name: delete AWS S3 bucket
+    command: |
+      aws s3api delete-bucket --bucket ${OKTETO_NAMESPACE}-oktacoshop
+      exitCode=hello
+      echo $exitCode
+      if [ $exitCode -eq 254 ]; then
+        exit 0
+      fi
+      
+      exit $exitCode
+
+  - name: delete AWS SQS queue
+    command: |
+      set -ex
+      output=$(aws sqs get-queue-url --queue-name ${OKTETO_NAMESPACE}-oktacoshop --output=json)
+      queue=$(echo $output |  jq '.["QueueUrl"]')
+      aws sqs delete-queue --queue-url $queue
+
+external:
+  sqs:
+    icon: storage
+    endpoints:
+    - name: queue
+  s3:
+    icon: storage
+    endpoints:
+    - name: bucket
+
+dev:
+  menu:
+    command: bash
+    sync:
+    - menu:/usr/src/app
+    forward:
+    - 9229:9229
