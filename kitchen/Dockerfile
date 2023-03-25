@@ -12,4 +12,4 @@ FROM busybox
 COPY --from=dev /usr/local/bin/kitchen /usr/local/bin/kitchen
 
 EXPOSE 8080
-CMD ["/usr/local/bin/kitchnen"]
+CMD ["/usr/local/bin/kitchen"]

@@ -37,16 +37,13 @@ spec:
           env:
             - name: QUEUE
               value: "{{ .Values.queue }}"
-            - name: AWS_DEFAULT_REGION
-              value: "{{ .Values.aws.region }}"
-            - name: AWS_SECRET_ACCESS_KEY
-              value: "{{ .Values.aws.secretAccessKey }}"
-            - name: AWS_ACCESS_KEY_ID
-              value: "{{ .Values.aws.accessKey }}"
             - name: GIN_MODE
               value: release
             - name: PORT
               value: "8000"
+          envFrom:
+          - secretRef:
+              name: {{ .Values.credentials.secret.name }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

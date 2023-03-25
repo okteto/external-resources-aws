@@ -2,10 +2,9 @@ replicaCount: 1
 
 image: external-resources-aws-demo-kitchen:latest
 queue: 
-aws:
-  region:
-  secretKey:
-  secretAccessKey:
+credentials:
+  secret:
+    name: aws-credentials
 
 imagePullSecrets: []
 nameOverride: ""
