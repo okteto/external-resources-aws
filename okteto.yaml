@@ -29,21 +29,11 @@ destroy:
   commands:
   - name: delete AWS S3 bucket
     command: |
-      aws s3api delete-bucket --bucket ${OKTETO_NAMESPACE}-oktacoshop
-      exitCode=hello
-      echo $exitCode
-      if [ $exitCode -eq 254 ]; then
-        exit 0
-      fi
-      
-      exit $exitCode
+      sh s3/destroy.sh
 
   - name: delete AWS SQS queue
     command: |
-      set -ex
-      output=$(aws sqs get-queue-url --queue-name ${OKTETO_NAMESPACE}-oktacoshop --output=json)
-      queue=$(echo $output |  jq '.["QueueUrl"]')
-      aws sqs delete-queue --queue-url $queue
+      sh sqs/destroy.sh
 
 external:
   sqs:
