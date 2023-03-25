@@ -16,7 +16,7 @@ document.getElementById("add").addEventListener("click", function () {
 });
 
 document.getElementById("placeOrder").addEventListener("click", function () {
-  const payload = {"order": data};
+  const payload = {"items": data};
   fetch("/order",{
     method: "post",
     body: JSON.stringify(payload),

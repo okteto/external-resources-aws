@@ -14,18 +14,68 @@ import (
 )
 
 type FoodOrder struct {
-	Order []string `json:"order"`
+	Items []string `json:"item"`
 }
 
 type FoodReady struct {
-	OrderID string `json:"orderId`
+	OrderID string `json:"orderId"`
 	Item    string `json:"item"`
 }
 
-var upgrader = websocket.Upgrader{
-	//check origin will check the cross region source (note : please not using in production)
-	CheckOrigin: func(r *http.Request) bool { return true },
+type PendingOrder struct {
+	OrderID string
+	Items   []PendingOrderItem
 }
+
+type PendingOrderItem struct {
+	Name  string
+	Ready bool
+}
+
+func AddPendingOrder(orderId string, f FoodOrder) {
+	p := PendingOrder{
+		Items: make([]PendingOrderItem, len(f.Items)),
+	}
+
+	for i := range f.Items {
+		p.Items[i] = PendingOrderItem{
+			Name:  f.Items[i],
+			Ready: false,
+		}
+	}
+
+	pendingOrders[orderId] = p
+}
+
+func MarkItemReady(f FoodReady) {
+	if k, ok := pendingOrders[f.OrderID]; ok {
+		for i := range k.Items {
+			if pendingOrders[f.OrderID].Items[i].Name == f.Item {
+				pendingOrders[f.OrderID].Items[i].Ready = true
+			}
+		}
+
+		if k.IsReady() {
+			fmt.Printf("Order '%s' is ready 🛎️!", f.OrderID)
+		}
+	}
+}
+
+func (p *PendingOrder) IsReady() bool {
+	for _, i := range p.Items {
+		if !i.Ready {
+			return false
+		}
+	}
+
+	return true
+}
+
+var (
+	//check origin will check the cross region source (note : please not using in production)
+	upgrader                              = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
+	pendingOrders map[string]PendingOrder = map[string]PendingOrder{}
+)
 
 func main() {
 
@@ -52,6 +102,7 @@ func main() {
 		}
 
 		fmt.Printf("Item '%s' from Order '%s' is ready", ready.Item, ready.OrderID)
+		MarkItemReady(ready)
 		c.Status(200)
 	})
 
@@ -86,6 +137,8 @@ func main() {
 					fmt.Println(err)
 					break
 				}
+
+				AddPendingOrder(*m.MessageId, order)
 
 				//Response message to client
 				err = ws.WriteJSON(order)
