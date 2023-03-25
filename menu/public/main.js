@@ -17,25 +17,24 @@ document.getElementById("add").addEventListener("click", function () {
 
 document.getElementById("placeOrder").addEventListener("click", function () {
   const payload = {"order": data};
-  console.log(payload);
-  $.ajax({
-    type: "POST",
-    url: "/order",
-    data: JSON.stringify(payload),
-    contentType: "application/json",
-    dataType: "json",
-    async: false,
-    success: function (order) {
-      console.log(order.id);
+  fetch("/order",{
+    method: "post",
+    body: JSON.stringify(payload),
+    headers: {
+      "Accept": "application/json",
+      "Content-Type": "application/json"
+    },
+  }).then(response => {
+    if (response.status >= 200 || response.status < 500) {
       clearFoodList();
       $("#orderPlaced").show();
       $('#orderPlaced').delay(5000).fadeOut();
-    },
-    error: function(err) {
-      console.log(err);
+    } else {
+      console.log(`error ${response.status}`)  
     }
-  });
-  
+  }).catch(error => { 
+    console.log(error)
+  })
 });
 
 document.getElementById("item").addEventListener("keydown", function (e) {
@@ -57,8 +56,8 @@ function renderFoodList() {
   if (!data.length) return;
 
   for (var i = 0; i < data.length; i++) {
-    var value = data[i].task;
-    var id = data[i].id;
+    var value = data[i];
+    var id = i;
     addItemToDOM(value, id);
   }
 }

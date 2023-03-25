@@ -13,9 +13,8 @@ app.get('/healthz', function (req, res) {
 })
 
 app.post('/order', function (req, res) {
-  console.log(req.body);
   var params = {
-   MessageBody: JSON.stringify(req.body.order),
+   MessageBody: JSON.stringify(req.body),
    QueueUrl: queue
  };
 
@@ -31,5 +30,5 @@ app.post('/order', function (req, res) {
 })
 
 
-console.log(`hi, my name is ${author}`);
+console.log('ready to take your order 📝');
 app.listen(3000)
