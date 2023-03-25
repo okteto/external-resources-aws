@@ -8,7 +8,7 @@ COPY . .
 RUN go build -o /usr/local/bin/kitchen
 
 FROM busybox
-
+COPY --from=dev /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=dev /usr/local/bin/kitchen /usr/local/bin/kitchen
 
 EXPOSE 8080
