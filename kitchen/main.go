@@ -13,8 +13,14 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+var (
+	//check origin will check the cross region source (note : please not using in production)
+	upgrader                              = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
+	pendingOrders map[string]PendingOrder = map[string]PendingOrder{}
+)
+
 type FoodOrder struct {
-	Items []string `json:"item"`
+	Items []string `json:"items"`
 }
 
 type FoodReady struct {
@@ -52,11 +58,13 @@ func MarkItemReady(f FoodReady) {
 		for i := range k.Items {
 			if pendingOrders[f.OrderID].Items[i].Name == f.Item {
 				pendingOrders[f.OrderID].Items[i].Ready = true
+				fmt.Printf("Item '%s' from Order '%s' is ready 🍽️ \n", f.Item, f.OrderID)
+
 			}
 		}
 
 		if k.IsReady() {
-			fmt.Printf("Order '%s' is ready 🛎️!", f.OrderID)
+			fmt.Printf("Order '%s' is ready 🛎️!\n", f.OrderID)
 		}
 	}
 }
@@ -70,12 +78,6 @@ func (p *PendingOrder) IsReady() bool {
 
 	return true
 }
-
-var (
-	//check origin will check the cross region source (note : please not using in production)
-	upgrader                              = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
-	pendingOrders map[string]PendingOrder = map[string]PendingOrder{}
-)
 
 func main() {
 
@@ -101,7 +103,6 @@ func main() {
 			c.AbortWithStatus(500)
 		}
 
-		fmt.Printf("Item '%s' from Order '%s' is ready", ready.Item, ready.OrderID)
 		MarkItemReady(ready)
 		c.Status(200)
 	})

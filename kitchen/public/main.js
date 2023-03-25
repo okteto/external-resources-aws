@@ -24,22 +24,24 @@ function removeItem() {
   var value = item.innerText;
 
   const payload = {"orderId": "123", "item": value};
-  console.log(payload);
 
-  $.ajax({
-    type: "POST",
-    url: "/ready",
-    data: JSON.stringify(payload),
-    contentType: "application/json",
-    dataType: "json",
-    async: false,
-    success: function () {
+  fetch("/ready", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    headers: {
+      "Accept": "application/json",
+      "Content-Type": "application/json"
+    },
+  })
+  .then(response => {
+    if (response.status >= 200 || response.status < 500) {
       data.splice(data.indexOf(value), 1);
       parent.removeChild(item);
-    },
-    error: function(err) {
-      console.log(err);
+    } else {
+      console.log(`error ${response.status}`)  
     }
+  }).catch(error => { 
+    console.log(error)
   });
 }
 
@@ -69,8 +71,8 @@ function addItemToDOM(text, id) {
 const webSocket = $.simpleWebSocket({ url: 'wss://kitchen-ramiro.ramiro.okteto.dev/ws' });
 var counter = 0;
 webSocket.listen(function(message) {
-  console.log("message received %s", message);
-  message.order.forEach(element => {
+  console.log(`message received ${message.items}`);
+  message.items.forEach(element => {
     counter += 1;
     addItemToDOM(element, counter);  
   });  
