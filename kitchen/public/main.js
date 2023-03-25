@@ -68,7 +68,7 @@ function addItemToDOM(text, id) {
   list.insertBefore(item, list.childNodes[0]);
 }
 
-const webSocket = $.simpleWebSocket({ url: 'wss://kitchen-ramiro.ramiro.okteto.dev/ws' });
+const webSocket = $.simpleWebSocket({ url: `wss://${window.location.host}/ws` });
 var counter = 0;
 webSocket.listen(function(message) {
   console.log(`message received ${message.items}`);
