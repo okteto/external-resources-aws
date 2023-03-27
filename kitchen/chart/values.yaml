@@ -1,8 +1,7 @@
 replicaCount: 1
 
-image: external-resources-aws-demo-menu:latest
+image: external-resources-aws-demo-kitchen:latest
 queue: 
-author: 
 credentials:
   secret:
     name: aws-credentials
@@ -25,13 +24,13 @@ securityContext: {}
 
 service:
   type: ClusterIP
-  port: 3000
+  port: 8000
 
 ingress:
   enabled: true
   className: ""
   annotations:
-    dev.okteto.com/generate-host: "menu"
+    dev.okteto.com/generate-host: "kitchen"
   hosts:
     - host: chart-example.local
       paths:

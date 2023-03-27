@@ -6,51 +6,6 @@ var removeSVG =
 
 renderFoodList();
 
-// User clicked on the add button
-// If there is any text inside the item field, add that text to the food list
-document.getElementById("add").addEventListener("click", function () {
-  var value = document.getElementById("item").value;
-  if (value) {
-    addItem(value);
-  }
-});
-
-document.getElementById("placeOrder").addEventListener("click", function () {
-  const payload = {"items": data};
-  fetch("/order",{
-    method: "post",
-    body: JSON.stringify(payload),
-    headers: {
-      "Accept": "application/json",
-      "Content-Type": "application/json"
-    },
-  }).then(response => {
-    if (response.status >= 200 || response.status < 500) {
-      clearFoodList();
-      $("#orderPlaced").show();
-      $('#orderPlaced').delay(5000).fadeOut();
-    } else {
-      console.log(`error ${response.status}`)  
-    }
-  }).catch(error => { 
-    console.log(error)
-  })
-});
-
-document.getElementById("item").addEventListener("keydown", function (e) {
-  var value = this.value;
-  if ((e.code === "Enter" || e.code === "NumpadEnter") && value) {
-    addItem(value);
-  }
-});
-
-function addItem(value) {
-  const id = data.length;
-  addItemToDOM(value, id);
-  document.getElementById("item").value = "";
-
-  data.push(value);
-}
 
 function renderFoodList() {
   if (!data.length) return;
@@ -62,18 +17,32 @@ function renderFoodList() {
   }
 }
 
-function clearFoodList() {
-    if (!data.length) return;
-    $('#food').empty();
-    data = [];
-  }
-
 function removeItem() {
+
   var item = this.parentNode.parentNode;
   var parent = item.parentNode;
   var value = item.innerText;
-  data.splice(data.indexOf(value), 1);
-  parent.removeChild(item);
+
+  const payload = {"orderId": "123", "item": value};
+
+  fetch("/ready", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    headers: {
+      "Accept": "application/json",
+      "Content-Type": "application/json"
+    },
+  })
+  .then(response => {
+    if (response.status >= 200 || response.status < 500) {
+      data.splice(data.indexOf(value), 1);
+      parent.removeChild(item);
+    } else {
+      console.log(`error ${response.status}`)  
+    }
+  }).catch(error => { 
+    console.log(error)
+  });
 }
 
 // Adds a new item to the fod list
@@ -98,3 +67,13 @@ function addItemToDOM(text, id) {
 
   list.insertBefore(item, list.childNodes[0]);
 }
+
+const webSocket = $.simpleWebSocket({ url: `wss://${window.location.host}/ws` });
+var counter = 0;
+webSocket.listen(function(message) {
+  console.log(`message received ${message.items}`);
+  message.items.forEach(element => {
+    counter += 1;
+    addItemToDOM(element, counter);  
+  });  
+});
