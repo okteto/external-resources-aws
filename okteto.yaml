@@ -1,5 +1,3 @@
-name: oktacoshop
-
 build:
   menu:
     context: menu
