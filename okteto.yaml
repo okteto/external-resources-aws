@@ -41,10 +41,6 @@ external:
     icon: storage
     endpoints:
     - name: queue
-  s3:
-    icon: storage
-    endpoints:
-    - name: bucket
 
 dev:
   menu:
