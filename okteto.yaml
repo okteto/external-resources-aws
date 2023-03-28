@@ -15,24 +15,24 @@ deploy:
   image: okteto/pipeline-runner:1.0.0-sam
   commands:
   # only run this command if you are not using Roles
-  - name: create AWS secret
+  - name: Create the AWS secret
     command: |
       kubectl create secret generic aws-credentials --save-config --dry-run=client --from-literal=AWS_REGION=$AWS_REGION --from-literal=AWS_DEFAULT_REGION=$AWS_REGION --from-literal=AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY --from-literal=AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -o yaml | kubectl apply -f -
 
-  - name: create an AWS SQS queue
+  - name: Create an AWS SQS queue
     command: |
       sh sqs/deploy.sh
 
-  - name: deploy the Menu microservice
+  - name: Deploy the Menu microservice
     command: helm upgrade --install menu menu/chart --set image=${OKTETO_BUILD_MENU_IMAGE} --set queue=${OKTETO_EXTERNAL_SQS_ENDPOINTS_QUEUE_URL} --set author=${OKTETO_NAMESPACE}-${OKTETO_NAME}
 
-  - name: deploy the Kitchen microservice
+  - name: Deploy the Kitchen microservice
     command: helm upgrade --install kitchen kitchen/chart --set image=${OKTETO_BUILD_KITCHEN_IMAGE} --set queue=$SQS_QUEUE_NAME
 
 destroy:
   image: okteto/pipeline-runner:1.0.0-sam
   commands:
-  - name: delete AWS SQS queue
+  - name: Delete AWS SQS queue
     command: |
       sh sqs/destroy.sh
 
