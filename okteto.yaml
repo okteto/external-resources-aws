@@ -39,6 +39,7 @@ destroy:
 external:
   sqs:
     icon: storage
+    notes: sqs/notes.md
     endpoints:
     - name: queue
 
