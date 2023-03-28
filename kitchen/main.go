@@ -114,6 +114,8 @@ func main() {
 			return
 		}
 		defer ws.Close()
+		fmt.Printf("connected to the kitchen %s", *queueURL)
+		fmt.Println()
 		for {
 			//Read Message from the SQS queue
 			msgResult, err := svc.ReceiveMessage(&sqs.ReceiveMessageInput{
@@ -126,6 +128,13 @@ func main() {
 				fmt.Println(err)
 				break
 			}
+
+			if len(msgResult.Messages) == 0 {
+				continue
+			}
+
+			fmt.Printf("received %d messages from the queue", len(msgResult.Messages))
+			fmt.Println()
 
 			for _, m := range msgResult.Messages {
 				svc.DeleteMessage(&sqs.DeleteMessageInput{
@@ -140,6 +149,9 @@ func main() {
 				}
 
 				AddPendingOrder(*m.MessageId, order)
+
+				fmt.Printf("sending order with %d items to the kitchen", len(order.Items))
+				fmt.Println()
 
 				//Response message to client
 				err = ws.WriteJSON(order)
