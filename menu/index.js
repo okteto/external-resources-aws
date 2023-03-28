@@ -20,7 +20,7 @@ app.post('/order', function (req, res) {
 
  sqsClient.send(new SendMessageCommand(params))
   .then(data => {
-    console.log(data);
+    console.log(`order sent to the kitchen 👩🏼‍🍳👨🏻‍🍳`);
     res.sendStatus(201);
   })
   .catch(error => {
