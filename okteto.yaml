@@ -21,18 +21,7 @@ deploy:
 
   - name: create an AWS SQS queue
     command: |
-      set -e
-      output=$(aws sqs create-queue --queue-name ${OKTETO_NAMESPACE}-oktacoshop --tags owner=${OKTETO_NAME})
-      queue=$(echo $output | jq '.["QueueUrl"]')
-      echo "OKTETO_EXTERNAL_SQS_ENDPOINTS_QUEUE_URL=${queue}" >> $OKTETO_ENV
-      echo "SQS_QUEUE_NAME=${OKTETO_NAMESPACE}-oktacoshop" >> $OKTETO_ENV
-
-  - name: create an AWS S3 bucket
-    command: |
-      set -e
-      bucket=${OKTETO_NAMESPACE}-oktacoshop
-      aws s3api create-bucket --bucket $bucket --acl private --region us-east-1
-      echo "OKTETO_EXTERNAL_S3_ENDPOINTS_BUCKET_URL=s3://${bucket}" >> $OKTETO_ENV
+      sh sqs/deploy.sh
 
   - name: deploy the Menu microservice
     command: helm upgrade --install menu menu/chart --set image=${OKTETO_BUILD_MENU_IMAGE} --set queue=${OKTETO_EXTERNAL_SQS_ENDPOINTS_QUEUE_URL} --set author=${OKTETO_NAMESPACE}-${OKTETO_NAME}
@@ -42,11 +31,6 @@ deploy:
 
 destroy:
   image: okteto/pipeline-runner:1.0.0-sam
-  commands:
-  - name: delete AWS S3 bucket
-    command: |
-      sh s3/destroy.sh
-
   - name: delete AWS SQS queue
     command: |
       sh sqs/destroy.sh
