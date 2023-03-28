@@ -1,4 +1,5 @@
 icon: icon: https://raw.githubusercontent.com/okteto/icons/main/oktaco.png
+
 build:
   menu:
     context: menu
