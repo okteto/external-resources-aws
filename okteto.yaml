@@ -31,6 +31,7 @@ deploy:
 
 destroy:
   image: okteto/pipeline-runner:1.0.0-sam
+  commands:
   - name: delete AWS SQS queue
     command: |
       sh sqs/destroy.sh
