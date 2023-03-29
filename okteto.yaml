@@ -52,6 +52,7 @@ external:
     - name: queue
   check:
     icon: dashboard
+    notes: check/notes.md
     endpoints:
     - name: docs
 
