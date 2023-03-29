@@ -27,15 +27,15 @@ deploy:
       sh sqs/deploy.sh
 
   - name: Deploy the Menu microservice
-    command: helm upgrade --install menu menu/chart --set image=${OKTETO_BUILD_MENU_IMAGE} --set queue=${OKTETO_EXTERNAL_SQS_ENDPOINTS_QUEUE_URL} --set author=${OKTETO_NAMESPACE}-${OKTETO_NAME}
+    command: helm upgrade --install menu menu/chart --set image=$OKTETO_BUILD_MENU_IMAGE --set queue=$SQS_QUEUE_URL --set author=${OKTETO_NAMESPACE}-${OKTETO_NAME}
 
   - name: Deploy the Kitchen microservice
-    command: helm upgrade --install kitchen kitchen/chart --set image=${OKTETO_BUILD_KITCHEN_IMAGE} --set queue=$SQS_QUEUE_NAME --set check=https://check-${OKTETO_NAMESPACE}.${OKTETO_DOMAIN}/checks
+    command: helm upgrade --install kitchen kitchen/chart --set image=$OKTETO_BUILD_KITCHEN_IMAGE --set queue=$SQS_QUEUE_NAME --set check=https://check-${OKTETO_NAMESPACE}.${OKTETO_DOMAIN}/checks
 
   - name: Deploy the Check microservice
     command: |
      helm upgrade --install check check/chart --set image=${OKTETO_BUILD_CHECK_IMAGE}
-     echo "OKTETO_EXTERNAL_CHECK_ENDPOINTS_DOCS_URL=https://check-${OKTETO_NAMESPACE}.${OKTETO_DOMAIN}/docs" >> $OKTETO_ENV
+     echo "OKTETO_EXTERNAL_DOCS_ENDPOINTS_DOCS_URL=https://check-${OKTETO_NAMESPACE}.${OKTETO_DOMAIN}/docs" >> $OKTETO_ENV
 
 destroy:
   image: okteto/pipeline-runner:1.0.0-sam
@@ -50,7 +50,7 @@ external:
     notes: sqs/notes.md
     endpoints:
     - name: queue
-  check:
+  docs:
     icon: dashboard
     notes: check/notes.md
     endpoints:
