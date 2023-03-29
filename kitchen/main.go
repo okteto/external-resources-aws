@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -67,8 +68,32 @@ func MarkItemReady(f FoodReady) {
 
 		if k.IsReady() {
 			fmt.Printf("Order '%s' is ready 🛎️!\n", f.OrderID)
+			k.OrderCheck()
 		}
 	}
+}
+
+func (p *PendingOrder) OrderCheck() {
+	checkServiceUrl := os.Getenv("CHECK")
+	buff := new(bytes.Buffer)
+	json.NewEncoder(buff).Encode(p)
+	fmt.Println(buff.String())
+
+	r, err := http.Post(checkServiceUrl, "application/json", buff)
+	if err != nil {
+		fmt.Printf("failed to order check: %s", err)
+
+		fmt.Println()
+		return
+	}
+
+	if r.StatusCode >= 400 {
+		fmt.Printf("failed to order check: %d %s", r.StatusCode, r.Status)
+		fmt.Println()
+		return
+	}
+
+	fmt.Printf("Ordered check for %s 🧮", p.OrderID)
 }
 
 func (p *PendingOrder) IsReady() bool {
@@ -167,7 +192,7 @@ func main() {
 					ReceiptHandle: m.ReceiptHandle,
 				})
 
-				fmt.Printf("completed message %s ", *m.ReceiptHandle)
+				fmt.Printf("completed message %s ", m.String())
 				fmt.Println()
 
 			}

@@ -1,8 +1,6 @@
 replicaCount: 1
 
-image: external-resources-aws-demo-kitchen:latest
-queue: 
-check:
+image: external-resources-aws-demo-check:latest
 credentials:
   secret:
     name: aws-credentials
@@ -31,7 +29,7 @@ ingress:
   enabled: true
   className: ""
   annotations:
-    dev.okteto.com/generate-host: "kitchen"
+    dev.okteto.com/generate-host: "check"
   hosts:
     - host: chart-example.local
       paths:
