@@ -52,47 +52,37 @@ function addItemToDOM(orderId, name) {
   list.insertBefore(item, list.childNodes[0]);
 }
 
-function listenForEvents() {
-  const serverUrl = `wss://${window.location.host}/ws`,
-  const connection = new WebSocket(serverUrl, "json");
-  
-  connection.onopen = function(evt){
-    console.log('ws on open');
-  }
+var backoff = 1;
 
-  connection.onmessage = function(evt) {
-    console.lot('ws on message');
-    const message = JSON.parse(evt.data);
-    console.lot(message);
-    console.log(`message received, orderId ${message.orderId}`);
-    message.items.forEach((item, index) => {
-      orderId = `${message.orderId}_${index}`;
-      addItemToDOM(orderId, item.name);
+function getOrders() {
+  fetch("/orders", {
+    method: "GET",
+    headers: {
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+    },
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw Error(response.statusText);
+      }
+      response.json()
+    })
+    .then(data => {
+      backoff = 1;
+      data.items.forEach((item, index) => {
+        orderId = `${data.orderId}_${index}`;
+        addItemToDOM(orderId, item.name);
+      });
+    })
+    .catch((error) => {
+      backoff++;
+      console.log(error);
+    })
+    .finally(()=> {
+      timeout = 1000 * backoff;
+      setTimeout(timeout, getOrders());
     });
-  }
-
-  /*
-  const webSocket = $.simpleWebSocket({
-    url: `wss://${window.location.host}/ws`,
-    onOpen: function (ev) {
-      console.log(`ws opened`);
-    },
-    onError: function (ev) {
-      console.log(`ws error: ${ev}`);
-    },
-    onClose: function (ev) {
-      console.log(`ws closed`);
-      setTimeout(listenForEvents, 1000);
-    },
-  });
-
-  webSocket.listen(function (message) {
-    console.log(`message received, orderId ${message.orderId}`);
-    message.items.forEach((item, index) => {
-      orderId = `${message.orderId}_${index}`;
-      addItemToDOM(orderId, item.name);
-    });
-  });*/
 }
 
-window.onload = listenForEvents;
+window.onload = getOrders;
