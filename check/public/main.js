@@ -17,9 +17,9 @@ fetch("/checks",{
     if (response.status >= 200 || response.status < 500) {
       response.json()
       .then(json => {
-        json.forEach(element => {
-          console.log(`adding ${element.id} - ${element.total }`);
-          addItemToDOM(element.id, element.total, element.items);
+        json.forEach(order => {
+          console.log(`adding ${order.orderId} - ${order.total }`);
+          addItemToDOM(order.orderId, order.total, order.items);
         })
       })
     } else {

@@ -10,24 +10,16 @@ from typing import List
 
 app = FastAPI()
 
-checks = {
-    "123": {
-        "id": "123",
-        "items": [{ "name": "three tacos"}]
-    },
-    "3456": {
-        "id": "3456",
-        "items": [{ "name": "18 tacos"}]
-    }
-}
+checks = {}
 
 
 class Item(BaseModel):
     name: str
     price: float | None = 0
+    ready: bool | None = False
 
 class Check(BaseModel):
-    id: str
+    orderId: str
     items: List[Item]
     total: float | None = 0
 
@@ -57,8 +49,8 @@ async def prepare_check(check: Check):
         total += price
 
     check.total = total
-    checks[check.id] = check
-    print(("The total for check {check_id} is: ${total} 🧮").format(check_id=check.id, total=check.total))
+    checks[check.orderId] = check
+    print(("The total for check {check_id} is: ${total} 🧮").format(check_id=check.orderId, total=check.total))
 
 
 @app.get("/checks/{check_id}")
