@@ -53,15 +53,23 @@ function addItemToDOM(orderId, name) {
 }
 
 function listenForEvents() {
-  const serverUrl = `wss://${window.location.host}/ws`,
+  const serverUrl = `wss://${window.location.host}/ws`;
   const connection = new WebSocket(serverUrl, "json");
   
   connection.onopen = function(evt){
     console.log('ws on open');
   }
 
+  connection.onerror = function(evt) {
+    console.log(`ws on error: ${JSON.stringify(evt)}`);
+  }
+
+  connection.onclose = function(evt) {
+    console.log(`ws on close: ${JSON.stringify(evt)}`);
+  }
+
   connection.onmessage = function(evt) {
-    console.lot('ws on message');
+    console.log('ws on message');
     const message = JSON.parse(evt.data);
     console.lot(message);
     console.log(`message received, orderId ${message.orderId}`);
@@ -70,29 +78,6 @@ function listenForEvents() {
       addItemToDOM(orderId, item.name);
     });
   }
-
-  /*
-  const webSocket = $.simpleWebSocket({
-    url: `wss://${window.location.host}/ws`,
-    onOpen: function (ev) {
-      console.log(`ws opened`);
-    },
-    onError: function (ev) {
-      console.log(`ws error: ${ev}`);
-    },
-    onClose: function (ev) {
-      console.log(`ws closed`);
-      setTimeout(listenForEvents, 1000);
-    },
-  });
-
-  webSocket.listen(function (message) {
-    console.log(`message received, orderId ${message.orderId}`);
-    message.items.forEach((item, index) => {
-      orderId = `${message.orderId}_${index}`;
-      addItemToDOM(orderId, item.name);
-    });
-  });*/
 }
 
 window.onload = listenForEvents;
