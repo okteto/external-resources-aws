@@ -53,6 +53,25 @@ function addItemToDOM(orderId, name) {
 }
 
 function listenForEvents() {
+  const serverUrl = `wss://${window.location.host}/ws`,
+  const connection = new WebSocket(serverUrl, "json");
+  
+  connection.onopen = function(evt){
+    console.log('ws on open');
+  }
+
+  connection.onmessage = function(evt) {
+    console.lot('ws on message');
+    const message = JSON.parse(evt.data);
+    console.lot(message);
+    console.log(`message received, orderId ${message.orderId}`);
+    message.items.forEach((item, index) => {
+      orderId = `${message.orderId}_${index}`;
+      addItemToDOM(orderId, item.name);
+    });
+  }
+
+  /*
   const webSocket = $.simpleWebSocket({
     url: `wss://${window.location.host}/ws`,
     onOpen: function (ev) {
@@ -73,7 +92,7 @@ function listenForEvents() {
       orderId = `${message.orderId}_${index}`;
       addItemToDOM(orderId, item.name);
     });
-  });
+  });*/
 }
 
 window.onload = listenForEvents;
