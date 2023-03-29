@@ -29,18 +29,19 @@ type FoodReady struct {
 }
 
 type PendingOrder struct {
-	OrderID string
-	Items   []PendingOrderItem
+	OrderID string             `json:"orderId"`
+	Items   []PendingOrderItem `json:"items"`
 }
 
 type PendingOrderItem struct {
-	Name  string
-	Ready bool
+	Name  string `json:"name"`
+	Ready bool   `json:"ready"`
 }
 
-func AddPendingOrder(orderId string, f FoodOrder) {
+func CreatePendingOrder(orderID string, f FoodOrder) PendingOrder {
 	p := PendingOrder{
-		Items: make([]PendingOrderItem, len(f.Items)),
+		OrderID: orderID,
+		Items:   make([]PendingOrderItem, len(f.Items)),
 	}
 
 	for i := range f.Items {
@@ -50,7 +51,8 @@ func AddPendingOrder(orderId string, f FoodOrder) {
 		}
 	}
 
-	pendingOrders[orderId] = p
+	pendingOrders[orderID] = p
+	return p
 }
 
 func MarkItemReady(f FoodReady) {
@@ -113,15 +115,17 @@ func main() {
 			fmt.Println(err)
 			return
 		}
+
 		defer ws.Close()
 		fmt.Printf("connected to the kitchen %s", *queueURL)
 		fmt.Println()
+
 		for {
 			//Read Message from the SQS queue
 			msgResult, err := svc.ReceiveMessage(&sqs.ReceiveMessageInput{
 				QueueUrl:            queueURL,
 				MaxNumberOfMessages: aws.Int64(1),
-				WaitTimeSeconds:     aws.Int64(5),
+				WaitTimeSeconds:     aws.Int64(3),
 			})
 
 			if err != nil {
@@ -137,30 +141,36 @@ func main() {
 			fmt.Println()
 
 			for _, m := range msgResult.Messages {
+
+				var order FoodOrder
+				if err := json.Unmarshal([]byte(*m.Body), &order); err != nil {
+					fmt.Printf("failed to unmarshall the message: %s", err)
+					fmt.Println()
+					break
+				}
+
+				p := CreatePendingOrder(*m.MessageId, order)
+
+				fmt.Printf("sending order %s with %d items to the kitchen", p.OrderID, len(p.Items))
+				fmt.Println()
+
+				//Response message to client
+				err = ws.WriteJSON(p)
+				if err != nil {
+					fmt.Printf("failed to send the message to the socket: %s", err)
+					fmt.Println()
+					break
+				}
+
 				svc.DeleteMessage(&sqs.DeleteMessageInput{
 					QueueUrl:      queueURL,
 					ReceiptHandle: m.ReceiptHandle,
 				})
 
-				var order FoodOrder
-				if err := json.Unmarshal([]byte(*m.Body), &order); err != nil {
-					fmt.Println(err)
-					break
-				}
-
-				AddPendingOrder(*m.MessageId, order)
-
-				fmt.Printf("sending order with %d items to the kitchen", len(order.Items))
+				fmt.Printf("completed message %s ", *m.ReceiptHandle)
 				fmt.Println()
 
-				//Response message to client
-				err = ws.WriteJSON(order)
-				if err != nil {
-					fmt.Println(err)
-					break
-				}
 			}
-
 		}
 	})
 
