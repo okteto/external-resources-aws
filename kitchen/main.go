@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -67,7 +68,20 @@ func MarkItemReady(f FoodReady) {
 
 		if k.IsReady() {
 			fmt.Printf("Order '%s' is ready 🛎️!\n", f.OrderID)
+			k.OrderCheck()
 		}
+	}
+}
+
+func (p *PendingOrder) OrderCheck() {
+	checkServiceUrl := os.Getenv("CHECK")
+	buff := new(bytes.Buffer)
+	json.NewEncoder(buff).Encode(p)
+
+	_, err := http.Post(checkServiceUrl, "application/json", buff)
+	if err != nil {
+		fmt.Printf("failed to order check: %s", err)
+		fmt.Println()
 	}
 }
 

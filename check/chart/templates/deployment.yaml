@@ -1,14 +1,14 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "kitchen.fullname" . }}
+  name: {{ include "check.fullname" . }}
   labels:
-    {{- include "kitchen.labels" . | nindent 4 }}
+    {{- include "check.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "kitchen.selectorLabels" . | nindent 6 }}
+      {{- include "check.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -16,13 +16,13 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "kitchen.selectorLabels" . | nindent 8 }}
+        {{- include "check.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "kitchen.serviceAccountName" . }}
+      serviceAccountName: {{ include "check.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -35,17 +35,14 @@ spec:
               containerPort: 8000
               protocol: TCP
           env:
-            - name: QUEUE
-              value: "{{ .Values.queue }}"
-            - name: CHECK
-              value: "{{ .Values.check }}"
-            - name: GIN_MODE
-              value: release
-            - name: PORT
-              value: "8000"
+          - name: AUTHOR
+            value: "{{ .Values.author }}"
+          - name: QUEUE
+            value: "{{ .Values.queue }}"
           envFrom:
           - secretRef:
               name: {{ .Values.credentials.secret.name }}
+
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
