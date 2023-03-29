@@ -1,3 +1,5 @@
+icon: https://raw.githubusercontent.com/okteto/icons/main/oktaco.png
+
 build:
   menu:
     context: menu
@@ -37,6 +39,7 @@ destroy:
 external:
   sqs:
     icon: storage
+    notes: sqs/notes.md
     endpoints:
     - name: queue
 
