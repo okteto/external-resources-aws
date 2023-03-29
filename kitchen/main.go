@@ -17,7 +17,12 @@ import (
 
 var (
 	//check origin will check the cross region source (note : please not using in production)
-	upgrader                              = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
+	upgrader = websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		}}
 	pendingOrders map[string]PendingOrder = map[string]PendingOrder{}
 )
 
@@ -31,8 +36,9 @@ type FoodReady struct {
 }
 
 type PendingOrder struct {
-	OrderID string             `json:"orderId"`
-	Items   []PendingOrderItem `json:"items"`
+	OrderID       string             `json:"orderId"`
+	ReceiptHandle string             `json:"-"`
+	Items         []PendingOrderItem `json:"items"`
 }
 
 type PendingOrderItem struct {
@@ -40,10 +46,11 @@ type PendingOrderItem struct {
 	Ready bool   `json:"ready"`
 }
 
-func CreatePendingOrder(orderID string, f FoodOrder) PendingOrder {
+func CreatePendingOrder(receiptHandle string, orderID string, f FoodOrder) PendingOrder {
 	p := PendingOrder{
-		OrderID: orderID,
-		Items:   make([]PendingOrderItem, len(f.Items)),
+		OrderID:       orderID,
+		ReceiptHandle: receiptHandle,
+		Items:         make([]PendingOrderItem, len(f.Items)),
 	}
 
 	for i := range f.Items {
@@ -54,6 +61,7 @@ func CreatePendingOrder(orderID string, f FoodOrder) PendingOrder {
 	}
 
 	pendingOrders[orderID] = p
+
 	return p
 }
 
@@ -62,27 +70,32 @@ func MarkItemReady(f FoodReady) {
 		for i := range k.Items {
 			if pendingOrders[f.OrderID].Items[i].Name == f.Item {
 				pendingOrders[f.OrderID].Items[i].Ready = true
-				fmt.Printf("Item '%s' from Order '%s' is ready 🍽️ \n", f.Item, f.OrderID)
+				fmt.Printf("Item '%s' from Order '%s' is ready 🍽️", f.Item, f.OrderID)
+				fmt.Println()
 			}
 		}
 
 		if k.IsReady() {
-			fmt.Printf("Order '%s' is ready 🛎️!\n", f.OrderID)
+			fmt.Printf("Order '%s' is ready 🛎️!", f.OrderID)
+			fmt.Println()
 			k.OrderCheck()
 		}
+
+		return
 	}
+
+	fmt.Printf("%s wasn't in the order list", f.OrderID)
+	fmt.Println()
 }
 
 func (p *PendingOrder) OrderCheck() {
 	checkServiceUrl := os.Getenv("CHECK")
 	buff := new(bytes.Buffer)
 	json.NewEncoder(buff).Encode(p)
-	fmt.Println(buff.String())
 
 	r, err := http.Post(checkServiceUrl, "application/json", buff)
 	if err != nil {
 		fmt.Printf("failed to order check: %s", err)
-
 		fmt.Println()
 		return
 	}
@@ -127,7 +140,7 @@ func checkForMessages(ctx context.Context, messages chan PendingOrder) {
 		default:
 			msgResult, err := svc.ReceiveMessage(&sqs.ReceiveMessageInput{
 				QueueUrl:            queueURL,
-				MaxNumberOfMessages: aws.Int64(1),
+				MaxNumberOfMessages: aws.Int64(5),
 				WaitTimeSeconds:     aws.Int64(3),
 			})
 
@@ -152,55 +165,32 @@ func checkForMessages(ctx context.Context, messages chan PendingOrder) {
 					break
 				}
 
-				p := CreatePendingOrder(*m.MessageId, order)
+				p := CreatePendingOrder(*m.ReceiptHandle, *m.MessageId, order)
 
 				fmt.Printf("sending order %s with %d items to the kitchen", p.OrderID, len(p.Items))
 				fmt.Println()
 
 				messages <- p
+
+				_, err := svc.DeleteMessage(&sqs.DeleteMessageInput{
+					QueueUrl:      queueURL,
+					ReceiptHandle: m.ReceiptHandle,
+				})
+
+				if err != nil {
+					fmt.Printf("failed to delete message %s: %s", *m.MessageId, err)
+					fmt.Println()
+				}
 			}
 		}
 	}
 }
 
-func completeMessages(ctx context.Context, completed chan string) {
-	sess := session.Must(session.NewSessionWithOptions(session.Options{}))
-	svc := sqs.New(sess)
-	urlResult, err := svc.GetQueueUrl(&sqs.GetQueueUrlInput{
-		QueueName: aws.String(os.Getenv("QUEUE")),
-	})
-
-	if err != nil {
-		panic(err)
-	}
-
-	queueURL := urlResult.QueueUrl
-
-	for {
-		select {
-		case <-ctx.Done():
-			fmt.Println("stop receiving messages")
-			return
-		case receiptHandle := <-completed:
-
-			svc.DeleteMessage(&sqs.DeleteMessageInput{
-				QueueUrl:      queueURL,
-				ReceiptHandle: aws.String(receiptHandle),
-			})
-
-			fmt.Printf("completed message %s", receiptHandle)
-			fmt.Println()
-		}
-	}
-}
-
 func main() {
-	pendingMessages := make(chan PendingOrder)
-	completedMessages := make(chan string)
+	pendingMessages := make(chan PendingOrder, 1024)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go checkForMessages(ctx, pendingMessages)
-	go completeMessages(ctx, completedMessages)
 
 	r := gin.Default()
 	r.SetTrustedProxies(nil)
@@ -216,21 +206,12 @@ func main() {
 		c.Status(200)
 	})
 
-	r.GET("/ws", func(c *gin.Context) {
-		ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
-		if err != nil {
-			fmt.Printf("failed to upgrade connection: %s", err)
-			fmt.Println()
-			return
-		}
-
-		defer ws.Close()
-		fmt.Printf("connected to the kitchen")
-		fmt.Println()
-
+	r.GET("/orders", func(c *gin.Context) {
+		fmt.Println("waiting for new orders")
 		m := <-pendingMessages
-		ws.WriteJSON(m)
-		fmt.Println("sent order to the kitchen 🔥")
+		fmt.Println("order ready")
+		c.JSON(http.StatusOK, m)
+
 	})
 
 	r.StaticFS("/public", http.Dir("public"))

@@ -52,6 +52,31 @@ function addItemToDOM(orderId, name) {
   list.insertBefore(item, list.childNodes[0]);
 }
 
+function getOrders() {
+  fetch("/orders", {
+    method: "GET",
+    headers: {
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+    },
+  })
+    .then((response) => response.json())
+    .then(data => {
+      data.items.forEach((item, index) => {
+        orderId = `${data.orderId}_${index}`;
+        addItemToDOM(orderId, item.name);
+      });
+    })
+    .catch((error) => {
+      console.log(error);
+    })
+    .finally(()=> {
+      setTimeout(1000, getOrders());
+    });
+}
+
+/*wsRetries = 0
+
 function listenForEvents() {
   const serverUrl = `wss://${window.location.host}/ws`;
   const connection = new WebSocket(serverUrl, "json");
@@ -66,6 +91,8 @@ function listenForEvents() {
 
   connection.onclose = function(evt) {
     console.log(`ws on close: ${JSON.stringify(evt)}`);
+    wsRetries++;
+    setTimeout(1000 * wsRetries, listenForEvents());
   }
 
   connection.onmessage = function(evt) {
@@ -78,6 +105,6 @@ function listenForEvents() {
       addItemToDOM(orderId, item.name);
     });
   }
-}
+}*/
 
-window.onload = listenForEvents;
+window.onload = getOrders;
