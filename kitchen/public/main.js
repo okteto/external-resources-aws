@@ -52,6 +52,8 @@ function addItemToDOM(orderId, name) {
   list.insertBefore(item, list.childNodes[0]);
 }
 
+var backoff = 1;
+
 function getOrders() {
   fetch("/orders", {
     method: "GET",
@@ -60,51 +62,27 @@ function getOrders() {
       "Content-Type": "application/json",
     },
   })
-    .then((response) => response.json())
+    .then((response) => {
+      if (!response.ok) {
+        throw Error(response.statusText);
+      }
+      response.json()
+    })
     .then(data => {
+      backoff = 1;
       data.items.forEach((item, index) => {
         orderId = `${data.orderId}_${index}`;
         addItemToDOM(orderId, item.name);
       });
     })
     .catch((error) => {
+      backoff++;
       console.log(error);
     })
     .finally(()=> {
-      setTimeout(1000, getOrders());
+      timeout = 1000 * backoff;
+      setTimeout(timeout, getOrders());
     });
 }
-
-/*wsRetries = 0
-
-function listenForEvents() {
-  const serverUrl = `wss://${window.location.host}/ws`;
-  const connection = new WebSocket(serverUrl, "json");
-  
-  connection.onopen = function(evt){
-    console.log('ws on open');
-  }
-
-  connection.onerror = function(evt) {
-    console.log(`ws on error: ${JSON.stringify(evt)}`);
-  }
-
-  connection.onclose = function(evt) {
-    console.log(`ws on close: ${JSON.stringify(evt)}`);
-    wsRetries++;
-    setTimeout(1000 * wsRetries, listenForEvents());
-  }
-
-  connection.onmessage = function(evt) {
-    console.log('ws on message');
-    const message = JSON.parse(evt.data);
-    console.lot(message);
-    console.log(`message received, orderId ${message.orderId}`);
-    message.items.forEach((item, index) => {
-      orderId = `${message.orderId}_${index}`;
-      addItemToDOM(orderId, item.name);
-    });
-  }
-}*/
 
 window.onload = getOrders;

@@ -5,8 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -107,6 +109,7 @@ func (p *PendingOrder) OrderCheck() {
 	}
 
 	fmt.Printf("Ordered check for %s 🧮", p.OrderID)
+	fmt.Println()
 }
 
 func (p *PendingOrder) IsReady() bool {
@@ -208,9 +211,22 @@ func main() {
 
 	r.GET("/orders", func(c *gin.Context) {
 		fmt.Println("waiting for new orders")
-		m := <-pendingMessages
-		fmt.Println("order ready")
-		c.JSON(http.StatusOK, m)
+		ticker := time.Tick(time.Duration(15) * time.Second)
+
+		select {
+		case <-c.Done():
+		case <-c.Request.Context().Done():
+			log.Printf("Received context cancel")
+			c.AbortWithStatus(http.StatusRequestTimeout)
+			return
+		case m := <-pendingMessages:
+			c.JSON(http.StatusOK, m)
+			fmt.Println("order sent to the kitchen")
+			return
+		case <-ticker:
+			c.AbortWithStatus(http.StatusRequestTimeout)
+			return
+		}
 
 	})
 
