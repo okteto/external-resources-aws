@@ -1,4 +1,5 @@
 import os
+import jinja2
 import uvicorn
 
 from fastapi import FastAPI, HTTPException
@@ -9,6 +10,8 @@ from typing import List
 
 
 app = FastAPI()
+env = jinja2.Environment(loader=jinja2.PackageLoader("main"), autoescape=jinja2.select_autoescape())
+template = env.get_template("receipt.j2")
 
 checks = {}
 
@@ -22,6 +25,7 @@ class Check(BaseModel):
     orderId: str
     items: List[Item]
     total: float | None = 0
+    url: str | None = ""
 
 
 @app.get("/healthz")
@@ -34,8 +38,7 @@ async def getChecks():
     response = []
     for checkID in checks:
         response.append(checks[checkID])
-
-    print(response)
+        
     return response
 
 @app.post("/checks", status_code=200)
@@ -51,6 +54,7 @@ async def prepare_check(check: Check):
     check.total = total
     checks[check.orderId] = check
     print(("The total for check {check_id} is: ${total} 🧮").format(check_id=check.orderId, total=check.total))
+    print(template.render(total=check.total, items=check.items, id=check.orderId))
 
 
 @app.get("/checks/{check_id}")

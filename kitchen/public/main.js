@@ -66,7 +66,7 @@ function getOrders() {
       if (!response.ok) {
         throw Error(response.statusText);
       }
-      response.json()
+      return response.json()
     })
     .then(data => {
       backoff = 1;
