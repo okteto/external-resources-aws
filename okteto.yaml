@@ -39,7 +39,7 @@ deploy:
   - name: Deploy the Check microservice
     command: |
      helm upgrade --install check check/chart --set image=${OKTETO_BUILD_CHECK_IMAGE} --set bucket=$S3_BUCKET_NAME
-     echo "OKTETO_EXTERNAL_DOCS_ENDPOINTS_DOCS_URL=https://check-${OKTETO_NAMESPACE}.${OKTETO_DOMAIN}/docs" >> $OKTETO_ENV
+     echo "OKTETO_EXTERNAL_API_DOCS_ENDPOINTS_DOCS_URL=https://check-${OKTETO_NAMESPACE}.${OKTETO_DOMAIN}/docs" >> $OKTETO_ENV
 
 destroy:
   image: okteto/pipeline-runner:1.0.0-sam
@@ -53,6 +53,12 @@ destroy:
       sh s3/destroy.sh
 
 external:
+  readme:
+    icon: graph
+    notes: README.md
+    endpoints:
+    - name: Try it out!
+      url: https://github.com/okteto/external-resources-aws
   sqs:
     icon: storage
     notes: sqs/notes.md
@@ -63,7 +69,7 @@ external:
     notes: s3/notes.md
     endpoints:
     - name: bucket
-  docs:
+  api-docs:
     icon: dashboard
     notes: check/notes.md
     endpoints:
