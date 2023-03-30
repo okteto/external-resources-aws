@@ -25,6 +25,10 @@ deploy:
   - name: Create an AWS SQS queue
     command: |
       sh sqs/deploy.sh
+  
+  - name: Create an AWS S3 bucket
+    command: |
+      sh s3/deploy.sh
 
   - name: Deploy the Menu microservice
     command: helm upgrade --install menu menu/chart --set image=$OKTETO_BUILD_MENU_IMAGE --set queue=$SQS_QUEUE_URL --set author=${OKTETO_NAMESPACE}-${OKTETO_NAME}
@@ -34,7 +38,7 @@ deploy:
 
   - name: Deploy the Check microservice
     command: |
-     helm upgrade --install check check/chart --set image=${OKTETO_BUILD_CHECK_IMAGE}
+     helm upgrade --install check check/chart --set image=${OKTETO_BUILD_CHECK_IMAGE} --set bucket=$S3_BUCKET_NAME
      echo "OKTETO_EXTERNAL_DOCS_ENDPOINTS_DOCS_URL=https://check-${OKTETO_NAMESPACE}.${OKTETO_DOMAIN}/docs" >> $OKTETO_ENV
 
 destroy:
@@ -44,12 +48,21 @@ destroy:
     command: |
       sh sqs/destroy.sh
 
+  - name: Delete AWS S3 bucket
+    command: |
+      sh s3/destroy.sh
+
 external:
   sqs:
     icon: storage
     notes: sqs/notes.md
     endpoints:
     - name: queue
+  s3:
+    icon: storage
+    notes: s3/notes.md
+    endpoints:
+    - name: bucket
   docs:
     icon: dashboard
     notes: check/notes.md

@@ -19,7 +19,7 @@ fetch("/checks",{
       .then(json => {
         json.forEach(order => {
           console.log(`adding ${order.orderId} - ${order.total }`);
-          addItemToDOM(order.orderId, order.total, order.items);
+          addItemToDOM(order.orderId, order.total, order.items, order.url);
         })
       })
     } else {
@@ -56,11 +56,12 @@ function removeItem() {
 
 
 // Adds a new item to the fod list
-function addItemToDOM(checkId, total, items) {
+function addItemToDOM(checkId, total, items, url) {
   var list = document.getElementById("check");
   var item = document.createElement("li");
   const food = items.map(i => i.name).join(", ");
-  item.innerText = `Check Id ${checkId} - Total $${total}: ${food}`;
+  
+  item.innerHTML = `<div>Check Id ${checkId} - Total $${total}: ${food} - <a href="${url}">Download Receipt</a></div>`;
   item.id = checkId;
 
   var buttons = document.createElement("div");

@@ -1,7 +1,10 @@
+import boto3
 import os
+import tempfile
 import jinja2
 import uvicorn
 
+from botocore.exceptions import ClientError
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 
@@ -13,6 +16,8 @@ app = FastAPI()
 env = jinja2.Environment(loader=jinja2.PackageLoader("main"), autoescape=jinja2.select_autoescape())
 template = env.get_template("receipt.j2")
 
+s3 = boto3.client('s3')
+s3Bucket = os.getenv("BUCKET")
 checks = {}
 
 
@@ -28,6 +33,19 @@ class Check(BaseModel):
     url: str | None = ""
 
 
+def upload_receipt(orderId: str, receipt: str):
+    
+    with tempfile.NamedTemporaryFile() as tmp:
+        tmp.write(bytes(receipt, encoding='utf8'))
+        tmp.seek(0)
+        key = f'{orderId}.txt'
+        try:
+            s3.upload_fileobj(tmp, s3Bucket, key, ExtraArgs={'ACL': 'public-read', 'ContentType': 'text/file', 'ContentEncoding':'utf-8'})
+            return f'https://{s3Bucket}.s3.amazonaws.com/{key}'
+        except ClientError as e:
+            print("failed to upload: ", e)
+            return ""
+
 @app.get("/healthz")
 async def healthz():
     return {"message": "Check please 🫰!"}
@@ -38,7 +56,7 @@ async def getChecks():
     response = []
     for checkID in checks:
         response.append(checks[checkID])
-        
+
     return response
 
 @app.post("/checks", status_code=200)
@@ -52,11 +70,11 @@ async def prepare_check(check: Check):
         total += price
 
     check.total = total
+    receipt = template.render(total=check.total, items=check.items, check_id=check.orderId)
+    check.url = upload_receipt(check.orderId, receipt)
     checks[check.orderId] = check
     print(("The total for check {check_id} is: ${total} 🧮").format(check_id=check.orderId, total=check.total))
-    print(template.render(total=check.total, items=check.items, id=check.orderId))
-
-
+    
 @app.get("/checks/{check_id}")
 async def getCheck(check_id):
     if check_id in checks.keys():
