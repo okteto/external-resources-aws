@@ -31,7 +31,9 @@ deploy:
       sh s3/deploy.sh
 
   - name: Deploy the Menu microservice
-    command: helm upgrade --install menu menu/chart --set image=$OKTETO_BUILD_MENU_IMAGE --set queue=$SQS_QUEUE_URL --set author=${OKTETO_NAMESPACE}-${OKTETO_NAME}
+    command: |
+      echo helm upgrade --install menu menu/chart --set image=$OKTETO_BUILD_MENU_IMAGE --set queue=$SQS_QUEUE_URL --set author=${OKTETO_NAMESPACE}-${OKTETO_NAME}
+      helm upgrade --install menu menu/chart --set image=$OKTETO_BUILD_MENU_IMAGE --set queue=$SQS_QUEUE_URL --set author=${OKTETO_NAMESPACE}-${OKTETO_NAME}
 
   - name: Deploy the Kitchen microservice
     command: helm upgrade --install kitchen kitchen/chart --set image=$OKTETO_BUILD_KITCHEN_IMAGE --set queue=$SQS_QUEUE_NAME --set check=https://check-${OKTETO_NAMESPACE}.${OKTETO_DOMAIN}/checks
