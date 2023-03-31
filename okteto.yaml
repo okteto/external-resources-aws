@@ -18,39 +18,43 @@ deploy:
   image: okteto/pipeline-runner:1.0.0-sam
   commands:
   # only run this command if you are not using Roles
-  - name: Create the AWS secret
+  - name: Fake deploy
     command: |
-      kubectl create secret generic aws-credentials --save-config --dry-run=client --from-literal=AWS_REGION=$AWS_REGION --from-literal=AWS_DEFAULT_REGION=$AWS_REGION --from-literal=AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY --from-literal=AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -o yaml | kubectl apply -f -
+        echo deployed
 
-  - name: Create an AWS SQS queue
-    command: |
-      sh sqs/deploy.sh
+  # - name: Create the AWS secret
+  #   command: |
+  #     kubectl create secret generic aws-credentials --save-config --dry-run=client --from-literal=AWS_REGION=$AWS_REGION --from-literal=AWS_DEFAULT_REGION=$AWS_REGION --from-literal=AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY --from-literal=AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID -o yaml | kubectl apply -f -
+
+  # - name: Create an AWS SQS queue
+  #   command: |
+  #     sh sqs/deploy.sh
   
-  - name: Create an AWS S3 bucket
-    command: |
-      sh s3/deploy.sh
+  # - name: Create an AWS S3 bucket
+  #   command: |
+  #     sh s3/deploy.sh
 
-  - name: Deploy the Menu microservice
-    command: helm upgrade --install menu menu/chart --set image=$OKTETO_BUILD_MENU_IMAGE --set queue=$SQS_QUEUE_URL --set author=${OKTETO_NAMESPACE}-${OKTETO_NAME}
+  # - name: Deploy the Menu microservice
+  #   command: helm upgrade --install menu menu/chart --set image=$OKTETO_BUILD_MENU_IMAGE --set queue=$SQS_QUEUE_URL --set author=${OKTETO_NAMESPACE}-${OKTETO_NAME}
 
-  - name: Deploy the Kitchen microservice
-    command: helm upgrade --install kitchen kitchen/chart --set image=$OKTETO_BUILD_KITCHEN_IMAGE --set queue=$SQS_QUEUE_NAME --set check=https://check-${OKTETO_NAMESPACE}.${OKTETO_DOMAIN}/checks
+  # - name: Deploy the Kitchen microservice
+  #   command: helm upgrade --install kitchen kitchen/chart --set image=$OKTETO_BUILD_KITCHEN_IMAGE --set queue=$SQS_QUEUE_NAME --set check=https://check-${OKTETO_NAMESPACE}.${OKTETO_DOMAIN}/checks
 
-  - name: Deploy the Check microservice
-    command: |
-     helm upgrade --install check check/chart --set image=${OKTETO_BUILD_CHECK_IMAGE} --set bucket=$S3_BUCKET_NAME
-     echo "OKTETO_EXTERNAL_API_DOCS_ENDPOINTS_DOCS_URL=https://check-${OKTETO_NAMESPACE}.${OKTETO_DOMAIN}/docs" >> $OKTETO_ENV
+  # - name: Deploy the Check microservice
+  #   command: |
+  #    helm upgrade --install check check/chart --set image=${OKTETO_BUILD_CHECK_IMAGE} --set bucket=$S3_BUCKET_NAME
+  #    echo "OKTETO_EXTERNAL_API_DOCS_ENDPOINTS_DOCS_URL=https://check-${OKTETO_NAMESPACE}.${OKTETO_DOMAIN}/docs" >> $OKTETO_ENV
 
 destroy:
   image: okteto/pipeline-runner:1.0.0-sam
   commands:
   - name: Delete AWS SQS queue
     command: |
-      sh sqs/destroy.sh
+      echo destroyed
 
-  - name: Delete AWS S3 bucket
-    command: |
-      sh s3/destroy.sh
+  # - name: Delete AWS S3 bucket
+  #   command: |
+  #     sh s3/destroy.sh
 
 external:
   readme:
@@ -64,16 +68,21 @@ external:
     notes: sqs/notes.md
     endpoints:
     - name: queue
+      url: https://github.com/okteto/external-resources-aws
   s3:
     icon: storage
     notes: s3/notes.md
     endpoints:
     - name: bucket
+      url: https://github.com/okteto/external-resources-aws
+
   api-docs:
     icon: dashboard
     notes: check/notes.md
     endpoints:
     - name: docs
+      url: https://github.com/okteto/external-resources-aws
+
 
 dev:
   menu:
