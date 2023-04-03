@@ -11,6 +11,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import List
 
+# This is enough new code to generate a new commit :smile:
+
 
 app = FastAPI()
 env = jinja2.Environment(loader=jinja2.PackageLoader("main"), autoescape=jinja2.select_autoescape())
@@ -34,7 +36,7 @@ class Check(BaseModel):
 
 
 def upload_receipt(orderId: str, receipt: str):
-    
+
     with tempfile.NamedTemporaryFile() as tmp:
         tmp.write(bytes(receipt, encoding='utf8'))
         tmp.seek(0)
@@ -74,7 +76,7 @@ async def prepare_check(check: Check):
     check.url = upload_receipt(check.orderId, receipt)
     checks[check.orderId] = check
     print(("The total for check {check_id} is: ${total} 🧮").format(check_id=check.orderId, total=check.total))
-    
+
 @app.get("/checks/{check_id}")
 async def getCheck(check_id):
     if check_id in checks.keys():
@@ -86,7 +88,7 @@ async def payCheck(check_id):
     if check_id in checks.keys():
         del checks[check_id]
         return
-    
+
     raise HTTPException(status_code=404, detail="Check not found 👎🏼")
 
 app.mount("/", StaticFiles(directory="public", html=True), name="public")
