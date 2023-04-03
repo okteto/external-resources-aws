@@ -8,29 +8,38 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 
 
-		<title>Oktaco Shop - Check</title>
+		<title>The Oktaco Shop - Check</title>
 
-		<!-- Roboto font embed -->
-		<link href="https://fonts.googleapis.com/css?family=Roboto:400,500,700" rel="stylesheet">
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;1,900&display=swap" rel="stylesheet">
 
-		<link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤑</text></svg>">
+
+		<link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌯</text></svg>">
 		
 		<!-- Stylesheets -->
 		<link rel="stylesheet" type="text/css" href="reset.min.css">
 		<link rel="stylesheet" type="text/css" href="style.css">
 	</head>
 	<body>
-		<div class="banner">
-			<img class="taco taco-left" src="food.png" />
-			🌮💰 The Oktaco Shop Check 🤑🌯
-			<img class="taco taco-right" src="food.png" />
+		<div class="page-container">
+
+			<img src="/logo.png" alt="The Oktaco Shop" class="logo" />
+
+			<h2>My Orders</h2>
+
+			<ul class="food" id="check"></ul>
+
 		</div>
 
-		
-		<div class="container">
-			<ul class="check" id="check"></ul>
-		</div>
-        
+		<footer class="page-footer">
+			Powered by Okteto & AWS
+
+			<img src="/okteto.svg" alt="Okteto" />
+
+		</footer>
+
+
 		<!-- JavaScripts -->
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 		<script src="main.js"></script>
