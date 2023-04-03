@@ -11,14 +11,14 @@ fi
 
 
 if [ $exitCode -eq 0 ]; then
-  echo "SQS queue created successfully"
-  queue=$(printf %s "$createOutput" | jq '.["QueueUrl"]')
+  queueUrl=$(printf %s "$createOutput" | jq '.["QueueUrl"]')
+  echo "SQS queue ${queueUrl} created successfully"
 fi
 
 if [ $exitCode -eq 254 ]; then
-  echo "SQS queue already exists"
+  echo "SQS queue ${queueName} already exists"
   output=$(aws sqs get-queue-url --queue-name "$queueName" --output=json)
-  queue=$(echo "$output" | jq '.["QueueUrl"]')
+  queueUrl=$(echo "$output" | jq '.["QueueUrl"]')
 fi
 
 encoded=$(printf %s "$queue" | jq -sRr @uri)
@@ -26,7 +26,7 @@ dashboard="https://${AWS_REGION}.console.aws.amazon.com/sqs/v2/home?region=${AWS
 
 {
   echo "OKTETO_EXTERNAL_SQS_ENDPOINTS_QUEUE_URL=$dashboard"
-  echo "SQS_QUEUE_URL=$queue"
+  echo "SQS_QUEUE_URL=$queueUrl"
   echo "SQS_QUEUE_NAME=$queueName"
 } >> "$OKTETO_ENV"
 
