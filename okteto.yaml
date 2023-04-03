@@ -58,7 +58,7 @@ external:
     icon: okteto
     notes: README.md
     endpoints:
-    - name: Try it out!
+    - name: readme
       url: https://github.com/okteto/external-resources-aws
   sqs:
     icon: aws
