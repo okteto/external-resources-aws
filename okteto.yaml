@@ -55,18 +55,18 @@ destroy:
 
 external:
   readme:
-    icon: graph
+    icon: okteto
     notes: README.md
     endpoints:
-    - name: Try it out!
+    - name: readme
       url: https://github.com/okteto/external-resources-aws
   sqs:
-    icon: storage
+    icon: aws
     notes: sqs/notes.md
     endpoints:
     - name: queue
   s3:
-    icon: storage
+    icon: aws
     notes: s3/notes.md
     endpoints:
     - name: bucket
