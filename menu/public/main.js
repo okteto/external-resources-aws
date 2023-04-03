@@ -22,7 +22,6 @@ document.getElementById("add").addEventListener("click", function () {
 
 
 document.getElementById("placeOrder").addEventListener("click", function () {
-  $("#orderPlaced").addClass("modal-open");
   const payload = {"items": data};
   fetch("/order",{
     method: "post",
