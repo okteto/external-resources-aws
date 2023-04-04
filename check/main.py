@@ -11,8 +11,6 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import List
 
-# This is enough new code to generate a new commit :smile:
-
 
 app = FastAPI()
 env = jinja2.Environment(loader=jinja2.PackageLoader("main"), autoescape=jinja2.select_autoescape())
@@ -95,4 +93,5 @@ app.mount("/", StaticFiles(directory="public", html=True), name="public")
 
 if __name__ == "__main__":
    reload=bool(os.getenv("RELOAD"))
+   print("This is jacob's version of the app")
    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=reload)
