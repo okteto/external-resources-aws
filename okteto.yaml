@@ -15,7 +15,7 @@ build:
     context: check
 
 deploy:
-  image: okteto/pipeline-runner:1.0.0-sam
+  image: public.ecr.aws/aws-cli/aws-cli
   commands:
   # only run this command if you are not using Roles
   - name: Create the AWS secret
