@@ -1,6 +1,9 @@
 icon: https://raw.githubusercontent.com/okteto/icons/main/oktaco.png
 
 build:
+  aws:
+    context: aws
+
   menu:
     context: menu
 
@@ -15,7 +18,7 @@ build:
     context: check
 
 deploy:
-  image: okteto/pipeline-runner:1.0.0-sam
+  image: $OKTETO_BUILD_AWS_IMAGE
   commands:
   # only run this command if you are not using Roles
   - name: Create the AWS secret
@@ -24,11 +27,11 @@ deploy:
 
   - name: Create an AWS SQS queue
     command: |
-      sh sqs/deploy.sh
+      sh aws/sqs/deploy.sh
   
   - name: Create an AWS S3 bucket
     command: |
-      sh s3/deploy.sh
+      sh aws/s3/deploy.sh
 
   - name: Deploy the Menu microservice
     command: |
@@ -43,15 +46,15 @@ deploy:
      echo "OKTETO_EXTERNAL_API_DOCS_ENDPOINTS_DOCS_URL=https://check-${OKTETO_NAMESPACE}.${OKTETO_DOMAIN}/docs" >> $OKTETO_ENV
 
 destroy:
-  image: okteto/pipeline-runner:1.0.0-sam
+  image: $OKTETO_BUILD_AWS_IMAGE
   commands:
   - name: Delete AWS SQS queue
     command: |
-      sh sqs/destroy.sh
+      sh aws/sqs/destroy.sh
 
   - name: Delete AWS S3 bucket
     command: |
-      sh s3/destroy.sh
+      sh aws/s3/destroy.sh
 
 external:
   readme:
@@ -62,12 +65,12 @@ external:
       url: https://github.com/okteto/external-resources-aws
   sqs:
     icon: aws
-    notes: sqs/notes.md
+    notes: aws/sqs/notes.md
     endpoints:
     - name: queue
   s3:
     icon: aws
-    notes: s3/notes.md
+    notes: aws/s3/notes.md
     endpoints:
     - name: bucket
   api-docs:
@@ -85,7 +88,7 @@ dev:
     - 9229:9229
   
   kitchen:
-    image: ${OKTETO_BUILD_KITCHEN_DEV_IMAGE}
+    image: $OKTETO_BUILD_KITCHEN_DEV_IMAGE
     command: bash
     sync:
     - kitchen:/usr/src/app
